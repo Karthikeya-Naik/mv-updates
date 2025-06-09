@@ -498,9 +498,9 @@ export default function PressReleaseShowcase() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 bg-white">
       <div className="mb-8">
-        <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">
-          Featured News
-        </span>
+       <span className="bg-green-100 text-green-900 text-lg font-bold px-3 py-1 rounded-xl shadow-sm tracking-wide">
+            Featured News
+       </span>
         <h1 className="text-3xl font-bold mt-2 mb-1 text-gray-800">
           The Innovators of Tomorrow
         </h1>
