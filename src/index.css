@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital@1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Sacramento&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif:wght@600&family=Playfair+Display:wght@400;600&family=Sacramento&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Domine:wght@700&family=Noto+Serif:wght@600&family=Playfair+Display:wght@400;600&family=Sacramento&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Domine:wght@700&family=Noto+Serif:wght@600&family=Playfair+Display:wght@400;600&family=Red+Rose:wght@700&family=Sacramento&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Domine:wght@700&family=EB+Garamond&family=Noto+Serif:wght@600&family=Playfair+Display:wght@400;600&family=Red+Rose:wght@700&family=Sacramento&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@500&family=Domine:wght@700&family=EB+Garamond&family=Noto+Serif:wght@600&family=Playfair+Display:wght@400;600&family=Red+Rose:wght@700&family=Sacramento&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.slick-slide > div{
+    margin: 0 10px;
+}
+
+.slick-prev:before,
+.slick-next:before {
+  color: grey;
+}
+
+.active{
+  background: blue;
+ }
+body {
+  overflow-x: hidden;
+}
+
+.common-heading {
+  font-size: 3.8rem;
+  font-weight: 600;
+  margin-bottom: 6rem;
+  text-transform: capitalize;
+}
+
+input,
+textarea {
+  max-width: 50rem;
+  color: #000; /* Replace with your actual color value */
+  padding: 1.6rem 2.4rem;
+  border: 1px solid #ccc; /* Replace with your actual color value */
+  text-transform: uppercase;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); /* Replace with your actual color value */
+}
+
+input[type="submit"] {
+  max-width: 16rem;
+  margin-top: 2rem;
+  background-color: #3498db; /* Replace with your actual color value */
+  color: #fff; /* Replace with your actual color value */
+  padding: 1.4rem 2.2rem;
+  border-style: solid;
+  border-width: 0.1rem;
+  text-transform: uppercase;
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
+.newsletter {
+  max-width: 90vw;
+  margin: auto;
+  padding: 2rem;
+  background-color: #D3D3D3;
+  border-radius: 1rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateY(-20%);
+
+}
+
+.subscribe-form {
+  display: flex;
+  justify-content: center; /* Put form and button on same line with space between */
+  width: 100%; /* Take up full width */
+
+}
+
+.subscribe-form input[type="email"] {
+  flex: 1; /* Take up remaining space */
+  margin-right: 25px; /* Adjust spacing between input and button */
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  outline: none;
+  height: 2.4rem;
+  text-transform: none;
+}
+
+.subscribe-form input[type="submit"] {
+  padding: 10px;
+  background-color: #65b741;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  text-transform: none;
+}
+
+.subscribe-form input[type="submit"]:hover {
+  background-color: #4f9433; /* Change color on hover */
+}
+
+/* Media Query for smaller screens */
+@media only screen and (max-width: 600px) {
+  .newsletter{
+    transform: translateY(-4%);
+
+  }
+  .subscribe-form {
+    flex-direction: row; /* Change back to row on smaller screens */
+    justify-content: space-between; /* Add space between input and button on smaller screens */
+  }
+
+  .subscribe-form input[type="email"] {
+    width: calc(50% - 10px); /* Adjust width to fit two elements in a row with margin */
+    margin-bottom: 0; /* Remove bottom margin for better alignment */
+  }
+
+  .subscribe-form input[type="submit"] {
+    width: calc(50% - 10px); /* Adjust width to fit two elements in a row with margin */
+  }
+}

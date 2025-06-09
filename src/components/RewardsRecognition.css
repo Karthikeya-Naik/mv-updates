@@ -1,0 +1,77 @@
+/* rewards.css */
+.rewards-page {
+  padding: 20px;
+  padding-bottom: 100px; 
+  background-color: #f9f9f9; 
+  display: flex;
+  flex-direction: column;
+  gap: 20px; 
+}
+
+.reward-item {
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease-in-out, transform 0.3s ease-in-out;
+  margin-bottom: 16px;
+  max-width: 100%;
+}
+
+.reward-item:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-5px); 
+}
+
+.carousel-container2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 8px;
+  max-width: 100%;
+  height: 500px 
+}
+
+.carousel-image
+.carousel-video {
+  width: 100%;
+  height: 100%;
+  max-height:400px;
+  object-fit: contain; 
+  border-radius: 8px;
+}
+
+
+@media (min-width: 640px) {
+  .rewards-page {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .reward-item {
+    flex: 1 1 calc(50% - 20px); 
+    max-width: calc(50% - 20px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .reward-item {
+    flex: 1 1 calc(33.333% - 20px); 
+    max-width: calc(33.333% - 20px);
+  }
+}
+
+
+.rewards-page::after {
+  content: "";
+  display: block;
+  height: 60px;
+}
+
+
+
+

@@ -1,0 +1,52 @@
+
+
+.carousel-container {
+    width: 90%;
+    height: 88%;
+    margin: auto;
+    
+  }
+  
+  .carousel-slide {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 360px; 
+    background-color: #f0f0f0; 
+      } 
+  
+  
+
+  .second-slide-content {
+    background-color: #ffff00; 
+  }
+
+  .red-line {
+    width: 200px;
+    height: 2px;
+    background-color: #ff0000;
+    margin: 0 auto;
+  }
+  
+  .text-white {
+    color: white !important;
+  }
+
+  
+  
+
+
+.slick-dots {
+  margin-top: 15px;
+    position:relative;
+    top:10px;
+/*   bottom: -50px; */
+}
+
+.slick-dots li button:before {
+  color: black; /* Adjust dot color */
+}
+
+.slick-dots li.slick-active button:before {
+  color: green; /* Active dot color */
+}
