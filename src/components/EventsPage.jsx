@@ -569,10 +569,11 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { FaExternalLinkAlt, FaLink, FaCalendarAlt } from "react-icons/fa";
-import UpcomingEvents, { upcomingEventsData } from "./UpcomingEvents";
+import UpcomingEvents from "./UpcomingEvents";
 
 const EventsPage = () => {
   const [events, setEvents] = useState([]);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -581,25 +582,34 @@ const EventsPage = () => {
   const [viewMode, setViewMode] = useState('all'); // 'all' or 'upcoming'
 
   const BASE_URL = "https://backend.marichiventures.com/admin/pages/events-api.php";
+  const UPCOMING_BASE_URL = "https://backend.marichiventures.com/admin/pages/upcoming-events-api.php";
   const IMAGE_BASE_URL = "https://backend.marichiventures.com/admin/pages/uploads/events";
+  const UPCOMING_IMAGE_BASE_URL = "https://backend.marichiventures.com/admin/pages/uploads/upcoming-events";
 
   // Fetch events data
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         setLoading(true);
-        const response = await fetch(BASE_URL);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch events');
+        // Fetch past events
+        const eventsResponse = await fetch(BASE_URL);
+        if (!eventsResponse.ok) {
+          throw new Error('Failed to fetch past events');
         }
+        const eventsData = await eventsResponse.json();
         
-        const data = await response.json();
-        
-        if (data.success) {
-          setEvents(data.events);
+        // Fetch upcoming events
+        const upcomingResponse = await fetch(UPCOMING_BASE_URL);
+        if (!upcomingResponse.ok) {
+          throw new Error('Failed to fetch upcoming events');
+        }
+        const upcomingData = await upcomingResponse.json();
+
+        if (eventsData.success && upcomingData.success) {
+          setEvents(eventsData.events || []);
+          setUpcomingEvents(upcomingData.upcomingEvents || []);
         } else {
-          throw new Error(data.message || 'Unknown error');
+          throw new Error(eventsData.message || upcomingData.message || 'Unknown error');
         }
       } catch (err) {
         setError(err.message);
@@ -612,38 +622,24 @@ const EventsPage = () => {
     fetchEvents();
   }, []);
 
-  // Extract unique categories from the events
+  // Extract unique categories from the events based on current view mode
   const categories = useMemo(() => {
-    // Show categories based on the current view mode
-    if (viewMode === 'all') {
-      const categorySet = new Set(events.map(event => event.category));
-      return ['All', ...Array.from(categorySet)];
-    } else {
-      // For upcoming events, get categories from upcomingEventsData
-      const categorySet = new Set(upcomingEventsData.map(event => event.category));
-      return ['All', ...Array.from(categorySet)];
-    }
-  }, [events, viewMode]);
+    let relevantEvents = viewMode === 'all' ? events : upcomingEvents;
+    const categorySet = new Set(relevantEvents.map(event => event.category));
+    return ['All', ...Array.from(categorySet)];
+  }, [events, upcomingEvents, viewMode]);
 
   // Filter events based on search and category
   const filteredEvents = useMemo(() => {
-    return events.filter(event => {
+    const relevantEvents = viewMode === 'all' ? events : upcomingEvents;
+    
+    return relevantEvents.filter(event => {
       const matchesCategory = activeCategory === 'All' || event.category === activeCategory;
       const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             event.description.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
-  }, [activeCategory, searchQuery, events]);
-
-  // Filter upcoming events based on categories
-  const filteredUpcomingEvents = useMemo(() => {
-    return upcomingEventsData.filter(event => {
-      const matchesCategory = activeCategory === 'All' || event.category === activeCategory;
-      const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            event.description.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
-  }, [activeCategory, searchQuery]);
+  }, [activeCategory, searchQuery, events, upcomingEvents, viewMode]);
 
   const handleEventClick = (event) => {
     setSelectedEvent(event);
@@ -653,8 +649,7 @@ const EventsPage = () => {
     setSelectedEvent(null);
   };
 
-  const handleRegistration = (event) => {
-    // Registration logic will go here
+  const handleRegistration = () => {
     alert(`Registration for "${selectedEvent.title}" will be processed shortly.`);
     // In a real implementation, this would redirect to a registration form or API call
   };
@@ -683,7 +678,6 @@ const EventsPage = () => {
         {/* View Mode Selection */}
         <div className="flex justify-center mb-8">
           <div className="bg-white rounded-full shadow-md p-1 flex">
-            {/* Always show "All Events" tab for navigation */}
             <button
               onClick={() => handleViewModeChange('all')}
               className={`px-6 py-2 rounded-full transition-all ${
@@ -708,7 +702,7 @@ const EventsPage = () => {
         </div>
 
         {/* Search */}
-        {/* <div className="max-w-xl mx-auto mb-8">
+        <div className="max-w-xl mx-auto mb-8">
           <div className="relative">
             <input
               type="text"
@@ -718,7 +712,7 @@ const EventsPage = () => {
               className="w-full px-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#65B741] focus:border-transparent"
             />
           </div>
-        </div> */}
+        </div>
 
         {/* Categories */}
         <div className="flex flex-wrap gap-2 justify-center mb-12">
@@ -738,80 +732,77 @@ const EventsPage = () => {
         </div>
 
         {/* Loading state */}
-        {loading && viewMode === 'all' && (
+        {loading && (
           <div className="flex justify-center items-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#65B741]"></div>
           </div>
         )}
 
         {/* Error state */}
-        {error && viewMode === 'all' && (
+        {error && (
           <div className="text-center py-12">
             <h3 className="text-2xl font-bold text-red-500 mb-2">Error loading events</h3>
             <p className="text-gray-700">{error}</p>
           </div>
         )}
 
-        {/* Events Grid - Regular Events */}
-        {viewMode === 'all' && !loading && !error && (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredEvents.map(event => (
-              <article
-                key={event.id}
-                className="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300"
-              >
-                <div className="relative h-48">
-                  <img
-                    src={`${IMAGE_BASE_URL}/${event.image}`}
-                    alt={event.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-bold mb-3 group-hover:text-[#65B741] transition-colors">
-                    {event.title}
-                  </h3>
-                  <p className="text-gray-600 mb-4 line-clamp-2">{event.description}</p>
-                  <div className="flex items-center justify-between text-sm text-gray-500">
-                    <button 
-                      onClick={() => handleEventClick(event)}
-                      className="flex items-center text-[#65B741] hover:text-[#54a332] transition-colors"
-                    >
-                      <FaExternalLinkAlt className="mr-2" /> View Details 
-                      <span className="ml-4 text-xs bg-gray-100 px-2 py-1 rounded-full">
-                        {event.category}
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-
-        {/* Upcoming Events Grid */}
-        {viewMode === 'upcoming' && (
+        {/* Events Display */}
+        {!loading && !error && (
           <>
-            <UpcomingEvents 
-              events={filteredUpcomingEvents} 
-              handleEventClick={handleEventClick} 
-              IMAGE_BASE_URL={IMAGE_BASE_URL} 
-            />
+            {viewMode === 'upcoming' ? (
+              <UpcomingEvents 
+                events={filteredEvents} 
+                handleEventClick={handleEventClick}
+                IMAGE_BASE_URL={UPCOMING_IMAGE_BASE_URL} 
+              />
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredEvents.map(event => (
+                  <article
+                    key={event.id}
+                    className="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300"
+                  >
+                    <div className="relative h-48">
+                      <img
+                        src={`${IMAGE_BASE_URL}/${event.image}`}
+                        alt={event.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="p-6">
+                      <h3 className="text-xl font-bold mb-3 group-hover:text-[#65B741] transition-colors">
+                        {event.title}
+                      </h3>
+                      <p className="text-gray-600 mb-4 line-clamp-2">{event.description}</p>
+                      <div className="flex items-center justify-between text-sm text-gray-500">
+                        <button 
+                          onClick={() => handleEventClick(event)}
+                          className="flex items-center text-[#65B741] hover:text-[#54a332] transition-colors"
+                        >
+                          <FaExternalLinkAlt className="mr-2" /> View Details 
+                        </button>
+                        <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">
+                          {event.category}
+                        </span>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
           </>
         )}
 
         {/* No results message */}
-        {viewMode === 'all' && !loading && !error && filteredEvents.length === 0 && (
+        {!loading && !error && filteredEvents.length === 0 && (
           <div className="text-center py-12">
             <h3 className="text-2xl font-bold text-gray-400 mb-2">No events found</h3>
-            <p className="text-gray-500">Try adjusting your search or filter settings</p>
-          </div>
-        )}
-
-        {viewMode === 'upcoming' && filteredUpcomingEvents.length === 0 && (
-          <div className="text-center py-12">
-            <h3 className="text-2xl font-bold text-gray-400 mb-2">No upcoming events found</h3>
-            <p className="text-gray-500">Try adjusting your search or filter settings</p>
+            <p className="text-gray-500">
+              {viewMode === 'upcoming' 
+                ? "No upcoming events scheduled at the moment" 
+                : "Try adjusting your search or filter settings"
+              }
+            </p>
           </div>
         )}
       </div>
@@ -822,7 +813,7 @@ const EventsPage = () => {
           <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="relative">
               <img 
-                src={`${IMAGE_BASE_URL}/${selectedEvent.image}`} 
+                src={`${viewMode === 'upcoming' ? UPCOMING_IMAGE_BASE_URL : IMAGE_BASE_URL}/${selectedEvent.image}`} 
                 alt={selectedEvent.title} 
                 className="w-full h-64 md:h-96 object-cover rounded-t-2xl"
               />
@@ -836,38 +827,43 @@ const EventsPage = () => {
             <div className="p-8">
               <h2 className="text-3xl font-bold mb-4">{selectedEvent.title}</h2>
               <p className="text-gray-700 mb-4">{selectedEvent.description}</p>
+              
               {selectedEvent.details && (
-                <div className="bg-gray-50 p-6 rounded-lg">
+                <div className="bg-gray-50 p-6 rounded-lg mb-6">
                   <h3 className="text-xl font-semibold mb-4">Event Details</h3>
                   <p className="text-gray-600" dangerouslySetInnerHTML={{ __html: selectedEvent.details }}></p>
                 </div>
               )}
-              {selectedEvent.location && (
-                <div className="mt-4">
-                  <h3 className="font-semibold text-lg">Location</h3>
-                  <p className="text-gray-600">{selectedEvent.location}</p>
-                </div>
-              )}
-              {selectedEvent.date && (
-                <div className="mt-4">
-                  <h3 className="font-semibold text-lg">Date</h3>
-                  <p className="text-gray-600">{selectedEvent.date}</p>
-                </div>
-              )}
-              {/* Registration Button */}
+              
+              <div className="grid md:grid-cols-2 gap-4 mb-6">
+                {selectedEvent.location && (
+                  <div>
+                    <h3 className="font-semibold text-lg text-gray-800">Location</h3>
+                    <p className="text-gray-600">{selectedEvent.location}</p>
+                  </div>
+                )}
+                {selectedEvent.date && (
+                  <div>
+                    <h3 className="font-semibold text-lg text-gray-800">Date</h3>
+                    <p className="text-gray-600">{selectedEvent.date}</p>
+                  </div>
+                )}
+              </div>
+              
               {selectedEvent.isUpcoming && selectedEvent.registrationOpen && (
-                <div className="mt-6">
+                <div className="mb-6">
                   <button
                     onClick={handleRegistration}
                     className="bg-[#65B741] hover:bg-[#54a332] text-white font-medium px-6 py-3 rounded-lg shadow-md transition-colors flex items-center"
                   >
-                    Register Here
+                    <FaExternalLinkAlt className="mr-2" />
+                    Register Now
                   </button>
                 </div>
               )}
-              {/* Additional Links Section */}
+              
               {selectedEvent.link && (
-                <div className="mt-6">
+                <div className="border-t pt-6">
                   <h3 className="text-xl font-semibold mb-4">Additional Resources</h3>
                   <div className="space-y-2">
                     <a 

@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from "react";
 import WebinarPage from "./WebinarPageTemplate";
-import tnpw1 from "../assets/tnpw1.jpg";
-import tnpup from "../assets/tnpup.jpg";
-import ecup from "../assets/UpComingWebinars.jpg";
-import Andy from "../assets/andy2.png";
-import franceseco from "../assets/Franceseco2.png";
-import kseniya from "../assets/kseniya3.png";
 
 const CombinedWebinars = () => {
   const [tnpWebinars, setTnpWebinars] = useState([]);
@@ -14,7 +8,6 @@ const CombinedWebinars = () => {
   const [error, setError] = useState({ tnp: null, ec: null });
 
   const API_BASE_URL = 'https://backend.marichiventures.com/admin/pages';
-  const IMAGE_BASE_URL = `${API_BASE_URL}/uploads/webinars`;
 
   useEffect(() => {
     const fetchTnpWebinars = async () => {
@@ -27,22 +20,18 @@ const CombinedWebinars = () => {
         
         // Transform API data to match the expected structure
         const transformedData = data.map(webinar => {
-          // Parse date from YYYY-MM-DD format to Date object
           const dateObj = new Date(webinar.date);
-          
-          // Determine image based on status or use default
-          const imageToUse = webinar.status === "past" ? tnpw1 : tnpup;
           
           return {
             id: parseInt(webinar.id),
             title: webinar.title,
             description: webinar.description,
             date: dateObj,
-            time: webinar.time.substring(0, 5) + " AM", // Convert "09:30:00" to "9:30 AM"
+            time: formatTime(webinar.time), // Convert to AM/PM format
             duration: webinar.duration,
             status: webinar.status,
-            isFirstUpcoming: webinar.isConfirmed === "true", // Map isConfirmed to isFirstUpcoming
-            image: imageToUse, // Use local image paths instead of API paths
+            isFirstUpcoming: webinar.isConfirmed === "true",
+            image: webinar.image_url || 'https://backend.marichiventures.com/admin/pages/uploads/webinars/default.jpg', // Fallback image
             speaker: webinar.speaker,
             registrationLink: webinar.registration_link
           };
@@ -67,36 +56,18 @@ const CombinedWebinars = () => {
         
         // Transform API data to match the expected structure for EC webinars
         const transformedData = data.map(webinar => {
-          // Parse date from YYYY-MM-DD format to Date object
           const dateObj = new Date(webinar.date);
-          
-          // Determine image based on speaker or use default
-          let imageToUse = ecup;
-          if (webinar.speaker.includes("Andy")) {
-            imageToUse = Andy;
-          } else if (webinar.speaker.includes("Franceseco")) {
-            imageToUse = franceseco;
-          } else if (webinar.speaker.includes("Kseniya")) {
-            imageToUse = kseniya;
-          }
-          
-          // Extract time in AM/PM format
-          const timeStr = webinar.time.substring(0, 5);
-          const hour = parseInt(timeStr.split(':')[0]);
-          const ampm = hour >= 12 ? "PM" : "AM";
-          const hour12 = hour % 12 || 12;
-          const formattedTime = `${hour12}:${timeStr.split(':')[1]} ${ampm}`;
           
           return {
             id: parseInt(webinar.id),
             title: webinar.title,
             description: webinar.description,
             date: dateObj,
-            time: formattedTime,
+            time: formatTime(webinar.time),
             duration: webinar.duration,
             status: webinar.status,
-            isFirstUpcoming: webinar.isConfirmed === "true", // Map isConfirmed to isFirstUpcoming
-            image: imageToUse,
+            isFirstUpcoming: webinar.isConfirmed === "true",
+            image: webinar.image_url || 'https://backend.marichiventures.com/admin/pages/uploads/webinars/default.jpg', // Fallback image
             speaker: webinar.speaker,
             registrationLink: webinar.registration_link
           };
@@ -109,6 +80,15 @@ const CombinedWebinars = () => {
         setError(prev => ({ ...prev, ec: error.message }));
         setLoading(prev => ({ ...prev, ec: false }));
       }
+    };
+
+    // Helper function to format time to AM/PM
+    const formatTime = (timeStr) => {
+      const [hours, minutes] = timeStr.split(':');
+      const hour = parseInt(hours);
+      const period = hour >= 12 ? 'PM' : 'AM';
+      const hour12 = hour % 12 || 12;
+      return `${hour12}:${minutes} ${period}`;
     };
 
     fetchTnpWebinars();
