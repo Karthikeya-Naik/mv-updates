@@ -610,6 +610,7 @@
 
 
 
+
 import React, { useRef } from "react";
 import emailjs from '@emailjs/browser';
 import { User, MapPin, School, Building, Mail, Phone, MessageSquare, Send, Home, Mail as MailIcon, PhoneCall } from 'lucide-react';
@@ -640,42 +641,33 @@ const Contact = () => {
            }}>
         <h2 className="font-bold text-2xl md:text-3xl mb-4">WRITE TO US</h2>
         
-        
         {/* Contact Info */}
-        <div className="flex flex-col justify-center items-center mx-auto max-w-md px-4 md:px-6 mb-6 text-sm text-gray-800">
-          <div className="w-full space-y-4 text-white text-left">
-            {/* Address */}
-            <div className="flex items-start gap-3">
-              <Home className="text-green-500 mt-1" size={32} />
-              <div>
-                <div className="font-bold">Address:</div>
-                <span>Marichi Ventures, T-Hub Phase-2</span>
-                <span>20, Vittal Rao Nagar, Inorbit Mall Road,</span>
-                <span>Madhapur, Hyderabad, Telangana</span>
-                <div>500081, India</div>
-              </div>
+        <div className="flex flex-col items-center mx-auto max-w-md px-4 md:px-6 mb-4 text-sm">
+          <div className="flex items-start gap-2 mb-2 w-full text-left">
+            <Home className="min-w-5 text-green-500 mt-1" size={16} />
+            <div className="flex flex-col">
+              <div><span className="font-bold">Address:</span> Marichi Ventures, T-Hub Phase-2, 20, Inorbit Mall Road,</div>
+              <div className="ml-0.5">Vittal Rao Nagar, Madhapur, Hyderabad</div>
             </div>
-
-            {/* Email */}
-            <div className="flex items-start gap-3">
-              <MailIcon className="text-green-500 mt-1" size={18} />
-              <div>
-                <div className="font-bold">Email:</div>
-                <div>info@marichiventures.com</div>
-              </div>
-            </div>
-
-            {/* Phone */}
-            <div className="flex items-start gap-3">
-              <PhoneCall className="text-green-500 mt-1" size={18} />
-              <div>
-                <div className="font-bold">Phone:</div>
-                <div>+91-7200212158</div>
-              </div>
-            </div>
+          </div>
+          
+          <div className="flex items-start gap-2 mb-2 w-full text-left">
+            <MapPin className="min-w-5 text-green-500 mt-1" size={16} />
+            <div><span className="font-bold">Pin:</span> 500081</div>
+          </div>
+          
+          <div className="flex items-start gap-2 mb-2 w-full text-left">
+            <MailIcon className="min-w-5 text-green-500 mt-1" size={16} />
+            <div><span className="font-bold">Email:</span> info@marichiventures.com</div>
+          </div>
+          
+          <div className="flex items-start gap-2 mb-2 w-full text-left">
+            <PhoneCall className="min-w-5 text-green-500 mt-1" size={16} />
+            <div><span className="font-bold">Phone:</span> +91-7200212158</div>
           </div>
         </div>
       </div>
+      
       {/* Contact Form Section */}
       <div className="container mx-auto px-4 mt-6">
         <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-md mb-8">
@@ -698,8 +690,7 @@ const Contact = () => {
                   placeholder="Name*"
                   autoComplete="off"
                   required
-                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 focus:bg-white transition-color placeholder-normal-case placeholder:capitalize"
-
+                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 focus:bg-white transition-color normal-case"
                 />
               </div>
               
@@ -711,7 +702,7 @@ const Contact = () => {
                   name="location"
                   placeholder="Location"
                   autoComplete="off"
-                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 focus:bg-white transition-colors placeholder:capitalize"
+                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 focus:bg-white transition-colors normal-case"
                 />
               </div>
               
@@ -723,7 +714,7 @@ const Contact = () => {
                   name="collegename"
                   placeholder="College name (for students)"
                   autoComplete="off"
-                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 focus:bg-white transition-colors placeholder:capitalize"
+                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 focus:bg-white transition-colors placeholder:capitalize normal-case"
                 />
               </div>
               
@@ -735,7 +726,7 @@ const Contact = () => {
                   name="companyname"
                   placeholder="Company name (for corporates)"
                   autoComplete="off"
-                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 focus:bg-white transition-colors placeholder:capitalize"
+                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 focus:bg-white transition-colors placeholder:capitalize normal-case"
                 />
               </div>
               
@@ -748,7 +739,7 @@ const Contact = () => {
                   placeholder="Email*"
                   autoComplete="off"
                   required
-                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 focus:bg-white transition-colors placeholder:capitalize"
+                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 focus:bg-white transition-colors placeholder:capitalize normal-case"
                 />
               </div>
               
@@ -761,7 +752,7 @@ const Contact = () => {
                   placeholder="Phone*"
                   autoComplete="off"
                   required
-                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 focus:bg-white transition-colors placeholder:capitalize"
+                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 focus:bg-white transition-colors placeholder:capitalize normal-case"
                 />
               </div>
               
@@ -774,7 +765,7 @@ const Contact = () => {
                   rows="4"
                   autoComplete="off"
                   required
-                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 focus:bg-white transition-colors resize-y placeholder:capitalize"
+                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 focus:bg-white transition-colors resize-y placeholder:capitalize normal-case"
                 ></textarea>
               </div>
               

@@ -1,19 +1,292 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
-import { Clock, BarChart2, User, DollarSign, Play, Briefcase, Mail, ExternalLink, ChevronLeft, BookOpen, Calendar, Globe, Tag } from 'lucide-react';
+import { Clock, BarChart2, User, Play, Briefcase, Mail, ExternalLink, ChevronLeft, BookOpen, Calendar, Globe, Tag, X, CreditCard, Phone, MapPin, Check, ArrowRight, IndianRupee } from 'lucide-react';
 
 const baseUrl = "https://backend.marichiventures.com/admin/pages/";
 
+// Enrollment/Purchase Modal Component (INR only)
+function EnrollmentModal({ isOpen, onClose, course, instructor }) {
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [formErrors, setFormErrors] = useState({});
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Load Razorpay script
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => setRazorpayLoaded(true);
+      document.body.appendChild(script);
+
+      return () => {
+        if (document.body.contains(script)) {
+          document.body.removeChild(script);
+        }
+      };
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  // Constants for fees
+  const GST_RATE = 0.18; // 18%
+  const PLATFORM_FEE_RATE = 0.02; // 2%
+
+  const getBasePrice = () => {
+    // Get the price directly as INR (no conversion needed)
+    const price = course.discount_price ? parseFloat(course.discount_price.replace('₹', '').replace(',', '')) : parseFloat(course.price.replace('₹', '').replace(',', ''));
+    return Math.round(price);
+  };
+
+  const getPlatformFee = () => {
+    const basePrice = getBasePrice();
+    return Number((basePrice * PLATFORM_FEE_RATE).toFixed(2));
+  };
+
+  const getGSTOnPlatformFee = () => {
+    const platformFee = getPlatformFee();
+    return Number((platformFee * GST_RATE).toFixed(2));
+  };
+
+  const getTotalPrice = () => {
+    const basePrice = getBasePrice();
+    const platformFee = getPlatformFee();
+    const gstOnPlatformFee = getGSTOnPlatformFee();
+    return Number((basePrice + platformFee + gstOnPlatformFee).toFixed(2));
+  };
+
+  // Form validation
+  const validateForm = () => {
+    const errors = {};
+    if (!customerName.trim()) errors.name = "Name is required";
+    if (!customerEmail.trim()) errors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(customerEmail)) errors.email = "Email is invalid";
+    if (!customerPhone.trim()) errors.phone = "Phone number is required";
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Handle payment
+  const handlePayment = () => {
+    if (!validateForm()) return;
+
+    if (!razorpayLoaded) {
+      alert("Payment gateway is loading. Please try again in a moment.");
+      return;
+    }
+
+    const amount = getTotalPrice();
+    // Convert price to smallest currency unit (paise for INR)
+    const amountInSmallestUnit = Math.round(amount * 100);
+
+    const options = {
+      key: "rzp_live_LmqhBMB4dIMIaO", // Your Razorpay Key ID - LIVE
+      amount: amountInSmallestUnit,
+      currency: "INR",
+      name: course.title, // Display course title instead of company name
+      description: `Course Enrollment - ${course.level} Level | Duration: ${course.duration}`,
+      image: `${baseUrl}${course.thumbnail_url}`, // Optional: Add course thumbnail
+      handler: function (response) {
+        alert(
+          `Payment Successful! Payment ID: ${response.razorpay_payment_id}`
+        );
+
+        const paymentData = {
+          paymentId: response.razorpay_payment_id,
+          courseTitle: course.title,
+          courseId: course.id,
+          amount: amount,
+          currency: "INR",
+          customerName: customerName,
+          customerEmail: customerEmail,
+          customerPhone: customerPhone,
+          instructorId: course.instructor_id,
+          instructorName: instructor ? instructor.name : 'Unknown'
+        };
+
+        console.log("Payment data:", paymentData);
+        
+        // Send confirmation to your server
+        fetch('https://backend.marichiventures.com/course-enrollment.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(paymentData),
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Enrollment recorded:', data);
+          onClose();
+        })
+        .catch(error => {
+          console.error('Error recording enrollment:', error);
+        });
+      },
+      prefill: {
+        name: customerName,
+        email: customerEmail,
+        contact: customerPhone,
+      },
+      theme: {
+        color: "#16a34a", // Green color matching your theme
+      },
+      notes: {
+        courseId: course.id,
+        courseTitle: course.title,
+        courseCategory: course.category,
+        courseDescription: course.short_description,
+        courseLevel: course.level,
+        courseDuration: course.duration,
+        instructor: instructor ? instructor.name : 'Unknown',
+        instructorDesignation: instructor ? instructor.designation : '',
+        basePrice: `₹ ${getBasePrice()}`,
+        platformFee: `₹${getPlatformFee()} (2%)`,
+        gstOnPlatformFee: `₹${getGSTOnPlatformFee()} (18%)`,
+        totalAmount: `₹${getTotalPrice()}`,
+        customer_name: customerName,
+        enrollment_date: new Date().toISOString(),
+      },
+    };
+
+    try {
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.on("payment.failed", function (response) {
+        console.error("Payment failed:", response.error);
+        alert(`Payment failed: ${response.error.description}`);
+      });
+      paymentObject.open();
+    } catch (err) {
+      console.error("Razorpay initialization error:", err);
+      alert("Unable to initialize payment. Please try again later.");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div className="flex justify-between items-center p-4 border-b">
+          <h2 className="text-xl font-bold text-green-700">{course.title}</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="p-4">
+          <p className="text-gray-600 mb-4">
+            {course.duration} | {course.level} Level | Complete Access to Course
+          </p>
+
+          {/* Customer details form */}
+          <div className="mb-4 space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Your Name
+              </label>
+              <input
+                type="text"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className="w-full p-2 border rounded-md"
+                placeholder="Full Name"
+              />
+              {formErrors.name && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>
+              )}
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                className="w-full p-2 border rounded-md lowercase"
+                placeholder="you@example.com"
+              />
+              {formErrors.email && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>
+              )}
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                className="w-full p-2 border rounded-md"
+                placeholder="Your phone number"
+              />
+              {formErrors.phone && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.phone}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Price Display */}
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <div className="text-2xl font-bold text-green-700">
+              ₹{getBasePrice()}
+            </div>
+          </div>
+
+          {/* Price Breakdown */}
+          <div className="space-y-2 mb-4">
+            <div className="flex justify-between">
+              <span>Base Price:</span>
+              <span>₹{getBasePrice()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Platform Fee (2%):</span>
+              <span>₹{getPlatformFee()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>GST on Platform Fee (18%):</span>
+              <span>₹{getGSTOnPlatformFee()}</span>
+            </div>
+            <div className="flex justify-between font-bold border-t pt-2 mt-2">
+              <span>Total Amount:</span>
+              <span>₹{getTotalPrice()}</span>
+            </div>
+          </div>
+
+          <button
+            onClick={handlePayment}
+            className="flex-1 px-6 py-3 bg-[#65B741] text-white rounded-lg hover:bg-[#54a332] transition-colors font-medium flex items-center justify-center gap-2 w-full"
+          >
+            <IndianRupee className="mr-2" />
+            Pay Now
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Main Courses Page Component
 export default function Courses() {
   const [courses, setCourses] = useState([]);
   const [instructors, setInstructors] = useState([]);
+  const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('courses');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [showEnrollmentModal, setShowEnrollmentModal] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null);
   
   const navigate = useNavigate();
   
@@ -22,11 +295,9 @@ export default function Courses() {
       try {
         setLoading(true);
         
-        // Fetch courses data
         const coursesResponse = await fetch(`${baseUrl}courses.php`);
         const coursesData = await coursesResponse.json();
         
-        // Fetch instructors data
         const instructorsResponse = await fetch(`${baseUrl}instructors.php`);
         const instructorsData = await instructorsResponse.json();
         
@@ -48,16 +319,25 @@ export default function Courses() {
     fetchData();
   }, []);
 
-  // Get unique categories
   const categories = ['All', ...new Set(courses.map(course => course.category))];
 
-  // Filter courses based on search and category
   const filteredCourses = courses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          course.short_description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || course.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const handleEnrollment = async (courseId) => {
+    const course = courses.find(c => c.id === courseId);
+    setSelectedCourse(course);
+    setShowEnrollmentModal(true);
+  };
+
+  const closeEnrollmentModal = () => {
+    setShowEnrollmentModal(false);
+    setSelectedCourse(null);
+  };
   
   if (loading) {
     return (
@@ -83,7 +363,6 @@ export default function Courses() {
   
   return (
     <div className="bg-gray-50 mb-4 min-h-screen">
-      {/* Header */}
       <header className="bg-gradient-to-r from-green-600 to-green-500 text-white">
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold">Courses</h1>
@@ -91,7 +370,6 @@ export default function Courses() {
         </div>
       </header>
       
-      {/* Tabs */}
       <div className="bg-white shadow">
         <div className="container mx-auto px-4">
           <div className="flex">
@@ -120,7 +398,6 @@ export default function Courses() {
               <h2 className="text-2xl font-bold mb-4 md:mb-0">Available Courses</h2>
               
               <div className="flex flex-col md:flex-row md:space-x-4 space-y-3 md:space-y-0">
-                {/* Category Filter */}
                 <select 
                   className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   value={selectedCategory}
@@ -131,7 +408,6 @@ export default function Courses() {
                   ))}
                 </select>
                 
-                {/* Search Input */}
                 <div className="relative">
                   <input
                     type="text"
@@ -156,6 +432,8 @@ export default function Courses() {
                     key={course.id} 
                     course={course} 
                     instructors={instructors} 
+                    isEnrolled={enrolledCourses.includes(course.id)}
+                    onEnroll={() => handleEnrollment(course.id)}
                     onClick={() => navigate(`/c/${course.id}`)}
                   />
                 ))}
@@ -177,17 +455,32 @@ export default function Courses() {
           </div>
         )}
       </div>
+
+      {showEnrollmentModal && selectedCourse && (
+        <EnrollmentModal
+          isOpen={showEnrollmentModal}
+          onClose={closeEnrollmentModal}
+          course={selectedCourse}
+          instructor={instructors.find(i => i.id.toString() === selectedCourse.instructor_id.toString())}
+        />
+      )}
     </div>
   );
 }
 
-// Course Card Component
-function CourseCard({ course, instructors, onClick }) {
-  const instructor = instructors.find(i => i.id === course.instructor_id.toString());
+// Course Card Component (INR only)
+function CourseCard({ course, instructors, isEnrolled, onEnroll, onClick }) {
+  const instructor = instructors.find(i => i.id.toString() === course.instructor_id.toString());
+  
+  // Helper function to extract price value from string
+  const getPriceValue = (priceString) => {
+    if (!priceString) return 0;
+    return parseFloat(priceString.replace('₹', '').replace(',', ''));
+  };
   
   return (
     <div 
-      className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1"
+      className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1 cursor-pointer"
       onClick={onClick}
     >
       <div className="relative">
@@ -246,29 +539,46 @@ function CourseCard({ course, instructors, onClick }) {
           </div>
         </div>
         
-        <div className="pt-3 border-t flex justify-between items-center">
-          <div>
-            {course.discount_price ? (
-              <div className="flex items-center">
-                <DollarSign size={16} className="text-green-600" />
-                <span className="text-lg font-bold text-green-600">{course.discount_price}</span>
-                <span className="ml-2 text-sm text-gray-500 line-through">${course.price}</span>
+        <div className="pt-3 border-t">
+          {isEnrolled ? (
+            <button 
+              className="w-full flex items-center justify-center text-green-600 hover:text-green-800 font-medium py-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClick();
+              }}
+            >
+              View Course
+              <ExternalLink size={16} className="ml-1" />
+            </button>
+          ) : (
+            <div className="flex justify-between items-center">
+              <div>
+                {course.discount_price ? (
+                  <div className="flex items-center">
+                    <IndianRupee size={16} className="text-green-600" />
+                    <span className="text-lg font-bold text-green-600">{getPriceValue(course.discount_price)}</span>
+                    <span className="ml-2 text-sm text-gray-500 line-through">₹{getPriceValue(course.price)}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <IndianRupee size={16} className="text-green-600" />
+                    <span className="text-lg font-bold text-green-600">{getPriceValue(course.price)}</span>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="flex items-center">
-                <DollarSign size={16} className="text-green-600" />
-                <span className="text-lg font-bold text-green-600">${course.price}</span>
-              </div>
-            )}
-          </div>
-          
-          <button 
-            className="flex items-center text-green-600 hover:text-green-800 font-medium"
-            onClick={onClick}
-          >
-            View Details
-            <ExternalLink size={16} className="ml-1" />
-          </button>
+              
+              <button 
+                className="px-4 py-2 bg-[#65B741] text-white rounded-lg hover:bg-[#54a332] transition-colors font-medium flex items-center justify-center gap-2 text-sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEnroll();
+                }}
+              >
+                Enroll Now
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -302,7 +612,7 @@ function InstructorCard({ instructor }) {
           {instructor.email}
         </div>
         
-        <button className="w-1/2 mx-auto  bg-gradient-to-r from-green-600 to-green-700 text-white font-medium py-2 px-4 rounded-md hover:opacity-90 transition flex items-center justify-center">
+        <button className="w-1/2 mx-auto bg-gradient-to-r from-green-600 to-green-700 text-white font-medium py-2 px-4 rounded-md hover:opacity-90 transition flex items-center justify-center">
           <Briefcase size={16} className="mr-2" />
           View Courses
         </button>
@@ -310,4 +620,3 @@ function InstructorCard({ instructor }) {
     </div>
   );
 }
-
