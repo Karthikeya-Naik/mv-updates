@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { FaCalendarAlt, FaUserAlt, FaEnvelope, FaPhone } from "react-icons/fa";
 import { IndianRupee } from "lucide-react";
-
+import { useAuth0 } from "@auth0/auth0-react";
 const EventRegistrationModal = ({ event, onClose, IMAGE_BASE_URL, DEFAULT_IMAGE }) => {
+  const { user, isAuthenticated } = useAuth0();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -26,9 +27,19 @@ const EventRegistrationModal = ({ event, onClose, IMAGE_BASE_URL, DEFAULT_IMAGE 
       }
     };
   }, []);
-
+  // Pre-fill form with Auth0 user data when available
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setFormData(prev => ({
+        ...prev,
+        email: user.email || "",
+        name: user.name || user.nickname || "",
+      }));
+    }
+  }, [isAuthenticated, user]);
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === "email" && isAuthenticated) return;
     setFormData((prev) => ({
       ...prev,
       [name]: name === "email" ? value.toLowerCase() : value,
@@ -265,6 +276,8 @@ const EventRegistrationModal = ({ event, onClose, IMAGE_BASE_URL, DEFAULT_IMAGE 
                   onChange={handleChange}
                   className="pl-10 w-full p-2 border rounded-md focus:ring-2 focus:ring-[#65B741] focus:border-transparent lowercase"
                   placeholder="your@email.com"
+                  readOnly={isAuthenticated} // Make read-only if authenticated
+                  style={isAuthenticated ? { backgroundColor: '#f9fafb', cursor: 'not-allowed' } : {}}
                 />
               </div>
               {formErrors.email && (

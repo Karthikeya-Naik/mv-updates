@@ -1287,7 +1287,7 @@
 // added webhook for razorpay  notifications
 import React, { useEffect, useState } from "react";
 import { Check, ArrowRight, DollarSign, IndianRupee, X } from "lucide-react";
-
+import { useAuth0 } from "@auth0/auth0-react";
 const PurchaseModal = ({
   isOpen,
   onClose,
@@ -1297,11 +1297,18 @@ const PurchaseModal = ({
   conversionRate,
 }) => {
   // Add state for customer details
+  const { user, isAuthenticated } = useAuth0();
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [formErrors, setFormErrors] = useState({});
-
+  // Pre-fill form with Auth0 user data when available
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setCustomerEmail(user.email || "");
+      setCustomerName(user.name || user.nickname || "");
+    }
+  }, [isAuthenticated, user, isOpen]);
   if (!isOpen) return null;
 
   // Constants for fees
@@ -1403,9 +1410,14 @@ const PurchaseModal = ({
               <input
                 type="email"
                 value={customerEmail}
-                onChange={(e) => setCustomerEmail(e.target.value)}
+                onChange={(e) => {
+                  // Don't allow changes to email if it's from Auth0
+                  if (!isAuthenticated) setCustomerEmail(e.target.value.toLowerCase());
+                }}
                 className="w-full p-2 border rounded-md lowercase"
                 placeholder="you@example.com"
+                readOnly={isAuthenticated} // Make read-only if authenticated
+                style={isAuthenticated ? { backgroundColor: '#f9fafb', cursor: 'not-allowed' } : {}}
               />
               {formErrors.email && (
                 <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>
@@ -1630,37 +1642,40 @@ const WorkshopSection = ({ workshops }) => {
         
         alert(`Payment Successful! Payment ID: ${paymentId}`);
 
-        const paymentData = {
-          paymentId: paymentId,
+        const workshopData = {
+          customerName: customerDetails.name,
+          customerEmail: customerDetails.email,
+          customerPhone: customerDetails.phone,
           workshopTitle: workshop.title,
           amount: amount,
           currency: currency,
-          customerName: customerDetails.name,
-          customerEmail: customerDetails.email,
-          customerPhone: customerDetails.phone
+          paymentId: paymentId,
+          paymentStatus: 'authorized'
         };
 
-        console.log("Payment data:", paymentData);
+        console.log("Workshop enrollment data:", workshopData);
         
         // Send confirmation to your server
-        fetch('/api/workshop-confirmation.php', {
+        fetch('https://backend.marichiventures.com/workshop-registration-confirmation.php', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(paymentData),
+          body: JSON.stringify(workshopData),
         })
         .then(response => response.json())
         .then(data => {
-          console.log('Workshop payment recorded:', data);
-          
-          // Check if payment was already processed on server side
-          if (data.status === 'already processed') {
-            console.log('Payment was already processed on server');
+          console.log('Workshop enrollment recorded:', data);
+          if (data.success) {
+            alert(`Workshop enrollment confirmed! Access until: ${new Date(data.access_end_date).toLocaleDateString()}`);
+          } else {
+            console.error('Error recording workshop enrollment:', data.message);
+            alert('Payment successful but there was an issue recording your enrollment. Please contact support.');
           }
         })
         .catch(error => {
-          console.error('Error recording workshop payment:', error);
+          console.error('Error recording workshop enrollment:', error);
+          alert('Payment successful but there was an issue recording your enrollment. Please contact support.');
         });
       },
       prefill: {

@@ -223,7 +223,7 @@ const UserPage = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const { user } = useAuth0();
   const persistedUser = user;
-
+ console.log(persistedUser);
   return (
     <>
       <div className="flex flex-col gap-12 items-start min-h-screen bg-gray-100 px-4 py-8 md:px-16 lg:px-32">

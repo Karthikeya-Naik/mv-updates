@@ -96,7 +96,7 @@ export const bannerData = {
         "3 Hours of Recorded Live Session Videos",
         "3 months R-Guru Access"
       ],
-      price: 1
+      price: 0.01
     },
     {
       title: "Reporting (Tables, Figures, Listings)",
